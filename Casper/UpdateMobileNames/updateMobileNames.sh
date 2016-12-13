@@ -20,9 +20,9 @@
 #  https://jamfnation.jamfsoftware.com/discussion.html?id=13118#respond
 #
 
-jssAPIUsername="<apiuser>"
-jssAPIPassword="<apipassword>"
-jssAddress="https://your.jss.com:8443"
+jssAPIUsername="username"
+jssAPIPassword="password"
+jssAddress="https://you.jss.com:8443"
 file="$1"
 
 #Verify we can read the file
@@ -49,15 +49,15 @@ do
 	counter=$[$counter+1]
 	line=`echo "$data" | head -n $counter | tail -n 1`
 	serialNumber=`echo "$line" | awk -F , '{print $1}'`
-	deviceName=`echo "$line" | awk -F , '{print $2}'`
+	deviceName=$(echo "$line" | awk -F , '{print $2}')
 	
 	echo "Attempting to update data for $serialNumber"
 	
 	echo $serialNumber " " $deviceName
-	response=`curl -sS -k -i -u $jssAPIUsername:$jssAPIPassword $jssAddress/JSSResource/mobiledevices/serialnumber/$serialNumber`
-	deviceID=`echo $response | xpath '//general/id' 2>&1 | awk -F'<id>|</id>' '{print $2}'`
-	output=`curl -sS -k -i -u $jssAPIUsername:$jssAPIPassword -X POST ${jssAddress}/JSSResource/mobiledevicecommands/command/DeviceName/$deviceName/id/$deviceID`
-	#Error Checking
+	response=`curl -s -k -i -u $jssAPIUsername:$jssAPIPassword -H "Accept: application/xml" $jssAddress/JSSResource/mobiledevices/serialnumber/$serialNumber`
+	deviceID=$(echo $response | xpath '//general/id' 2>&1 | awk -F'<id>|</id>' '{printf $2}')
+	output=`curl -s -k -i -u $jssAPIUsername:$jssAPIPassword -X POST $jssAddress/JSSResource/mobiledevicecommands/command/DeviceName/$deviceName/id/$deviceID`
+	#Error Checking																		    /mobiledevicecommands/command/DeviceName/{device_name}/id/{id_list}
 	error=""
 	error=`echo $output | grep "Conflict"`
 	if [[ $error != "" ]]; then
